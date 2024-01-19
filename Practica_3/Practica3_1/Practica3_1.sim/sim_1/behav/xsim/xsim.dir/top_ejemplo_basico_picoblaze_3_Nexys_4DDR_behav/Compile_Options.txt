@@ -1,0 +1,1 @@
+-wto "5618ec53eb494d329093d63599608bd3" --incr --debug "typical" --relax --mt "2" -L "xil_defaultlib" -L "secureip" --snapshot "top_ejemplo_basico_picoblaze_3_Nexys_4DDR_behav" "xil_defaultlib.top_ejemplo_basico_picoblaze_3_Nexys_4DDR" -log "elaborate.log" 

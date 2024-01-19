@@ -1,0 +1,7 @@
+Running: xsim.dir/top_ejemplo_basico_picoblaze_3_Nexys_4DDR_behav/xsimk.exe -simmode gui -wdb top_ejemplo_basico_picoblaze_3_Nexys_4DDR_behav.wdb -simrunnum 0 -socket 50134
+Design successfully loaded
+Design Loading Memory Usage: 7932 KB (Peak: 7932 KB)
+Design Loading CPU Usage: 0 ms
+Simulation completed
+Simulation Memory Usage: 9308 KB (Peak: 9308 KB)
+Simulation CPU Usage: 0 ms

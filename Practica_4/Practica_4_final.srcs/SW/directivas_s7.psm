@@ -1,0 +1,14 @@
+; Generación del fichero VHDL con el código para la memoria de programa
+  VHDL	"ROM_blank_modificada_s7.vhd", "picocode_s7.vhd", "picocode_s7"
+
+; Los siguientes dos comandos se utilizan para cambiar el código del programa directamente en el archivo .bit
+; de configuración sin tener que realizar de nuevo la implementación de todo el sistema en Vivado.
+; De esa forma, cuando se ensamble el programa, la FPGA se reconfigurará de forma automática con el nuevo código.
+; El comando COE genera un archivo con el código máquina en formato coe.
+  COE "picocode_s7.coe"
+
+; El comando EXEC ejecuta el archivo por lotes load_sw_Vivado_s7.bat.
+; Como parámetro se le pasa el archivo .bit obtenido en la implementación.
+; Hay que indicar el directorio del archivo .bit relativo al directorio donde se encuentre el código del programa en ensamblador.
+; Comentarlo si solamente se desea simular el programa y no configurar la FPGA.
+  EXEC "load_sw_Vivado_s7.bat <nombre_archivo.bit_con_directorio_relativo_al_del_programa_en_ensamblador>"

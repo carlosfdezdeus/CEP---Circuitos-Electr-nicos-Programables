@@ -1,0 +1,162 @@
+; Generación del fichero VHDL con el código para la memoria del programa
+                                            VHDL    "ROM_blank_modificada_s7.vhd", "picocode_s7.vhd", "picocode_s7"
+
+; Defición de direcciones de PUERTOS de ENTRADA:
+FUENTE_INTERRUPCION                         DSIN    $00
+INTERRUPTORES_MENOR_PESO                    DSIN    $01
+INTERRUPTORES_MAYOR_PESO                    DSIN    $02
+PULSADORES                                  DSIN    $03                                                                   ; No se si es ese el puetto donde va el Temporizador    
+
+; Definición de direcciones de PUERTOS de SALIDA:
+LEDs_MENOR_PESO                             DSOUT   0                                                                     ; LEDs_MENOR_PESO se modifican con INTERRUPTORES_MENOR_PESO
+LEDs_MAYOR_PESO                             DSOUT   1                                                                     ; LEDs_MAYOR_PESO se modifican con INTERRUPTORES_MAYOR_PESO
+DIGITO_0                                    DSOUT   2                                                                     ; DIGITO_0 se modifica con INTERRUPTORES_MENOR_PESO
+DIGITO_T                                    DSOUT   3                                                                     ; DIGITO_1 se modifica con INTERRUPTORES_MAYOR_PESO
+DIGITO_N                                    DSOUT   4
+DIGITO_I                                    DSOUT   5
+DIGITO_4                                    DSOUT   6
+DIGITO_L                                    DSOUT   7
+DIGITO_U                                    DSOUT   8
+DIGITO_P                                    DSOUT   9
+UART_RS232                                  DSOUT   10
+
+; Definición de nombres para los REGISTROS que se utilizan:
+count                                       EQU     s0
+estado_actual_interruptores_menor_peso      EQU     s1
+estado_anterior_interruptores_menor_peso    EQU     s2
+estado_actual_interruptores_mayor_peso      EQU     s3
+estado_anterior_interruptores_mayor_peso    EQU     s4
+estado_actual_pulsadores                    EQU     s5
+estado_anterior_pulsadores		            EQU	    s6
+tipo_interrupcion                           EQU     s7
+; Cabe destacar que no es necesario el uso de los 'estado_anterior' están por si se necesitan después
+;registro_auxiliar                           EQU     sF    ; Prefiero sin etiqueta
+
+
+
+; COMIENZO DEL PROGRAMA PRINCIPAL:
+                                ORG     $0                                                                                  ; El programa comienza en la posición 0
+
+inicio:                         LOAD    count, $00                                                                          ; Inicializa el contador
+                                LOAD    sF, $00                                                                             ; Carga un 0 en el registro auxiliar sF
+                                OUT     sF, LEDs_MENOR_PESO                                                                 ; Apaga los LEDs de menor peso
+                                OUT     sF, LEDs_MAYOR_PESO                                                                 ; Apaga los LEDs de mayor peso
+                                OUT     sF, DIGITO_0                                                                        ; DIGITO_0 <- $00: Pone a 0 el digito 0 del visualizador
+                                OUT     sF, DIGITO_T                                                                        ; DIGITO_1 <- $00: Pone a 0 el digito 1 del visualizador
+                                OUT     sF, DIGITO_N                                                                        ; DIGITO_2 <- $00: Pone a 0 el digito 2 del visualizador
+                                OUT     sF, DIGITO_I                                                                        ; DIGITO_3 <- $00: Pone a 0 el digito 3 del visualizador
+                                OUT     sF, DIGITO_4                                                                        ; DIGITO_4 <- $00: Pone a 0 el digito 3 del visualizador
+                                OUT     sF, DIGITO_L                                                                        ; DIGITO_5 <- $00: Pone a 0 el digito 3 del visualizador
+                                OUT     sF, DIGITO_U                                                                        ; DIGITO_6 <- $00: Pone a 0 el digito 3 del visualizador
+                                OUT     sF, DIGITO_P                                                                        ; DIGITO_7 <- $00: Pone a 0 el digito 3 del visualizador
+                                EINT                                                                                        ; Habilito las interrupciones externas
+
+
+lectura_puertos:          
+                                ; Leo estado interruptores y los cargo en sus respectivos LEDs:
+                                IN      estado_actual_interruptores_mayor_peso, INTERRUPTORES_MAYOR_PESO                    ; Lee el estado actual de los interruptores de mayor peso
+                                IN      estado_actual_interruptores_menor_peso, INTERRUPTORES_MENOR_PESO                    ; Lee el estado actual de los interruptores de menor peso
+                                IN      estado_actual_pulsadores, PULSADORES                                                ; Lee el estado actual de los pulsadores
+
+                                ; Visualizo en LEDs de MAYOR peso los INTERRUPTORES
+                                IN      sF, INTERRUPTORES_MAYOR_PESO                                                        ; Cargo en el registro auxiliar el valor de los interruptores de mayor peso
+                                OUT     sF, LEDs_MAYOR_PESO                                                                 ; Pongo los LEDs de mayor peso al valor de los INTERRUPTORES de mayor peso
+                                
+                                ; Compruebo si los interruptores de menor peso están a 0 para NO mostrar 'InT'
+                                COMP    estado_actual_interruptores_menor_peso, 0                                           ; Compruebo si el estado del interruptor de menor peso es "00000000"
+                                JUMP    NZ, muestro_int                                                                      ; Si el estado != "00000000" -> Muestro int y el DIGITO_0
+								CALL 	no_muestro_int
+								
+                                ; Compruebo si los pulsadores peso están a 0 para NO mostrar 'PUL'
+sigo_0:                         COMP    estado_actual_pulsadores, 0                                                         ; Compruebo si el estado de los pulsadores es "00000000"
+                                JUMP    NZ, muestro_pul                                                                      ; Si el estado != "00000000" -> Muestro pul y el DIGITO_4
+								CALL	no_muestro_pul
+
+                                ; Guardo los estado actuales como anteriores para volver al inicio del bucle
+sigo_1:                         LOAD    estado_anterior_interruptores_menor_peso, estado_actual_interruptores_menor_peso    ; Guardo en estado_anterior_interruptores_menor_peso el estado actual para la siguiente iteración del bucle
+                                LOAD    estado_anterior_interruptores_mayor_peso, estado_actual_interruptores_mayor_peso    ; Guardo en estado_anterior_interruptores_mayor_peso el estado actual para la siguiente iteración del bucle                                
+                                LOAD    estado_anterior_pulsadores, estado_actual_pulsadores                                ; Guardo en estado_anterior_pulsadores el estado actual para la siguiente iteración del bucle
+                                JUMP    lectura_puertos                                                                     ; Vuelvo a inicio del bucle -> voy a lectura_interruptores
+
+
+
+                                ; Escribo InT en DIGITO_I, DIGITO_N y DIGITO_T y visualizo los interruptores en DIGITO_0
+muestro_int:                    LOAD    sF, $60                                                                             ; Carga el dato correspondiente a "I" en el resgistro auxiliar sF
+                                OUT     sF, DIGITO_I                                                                        ; Representa la letra "I" en el digito 3 del visualizador
+                                LOAD    sF, $2A                                                                             ; Carga el dato correspondiente a "n" en el resgistro auxiliar sF
+                                OUT     sF, DIGITO_N                                                                        ; Representa la letra "n" en el digito 2 del visualizador
+                                LOAD    sF, $1E                                                                             ; Carga el dato correspondiente a "T" en el registro auxiliar
+                                OUT     sF, DIGITO_T                                                                        ; Representa la letra "T" en el digito 1 del visualizador
+                                IN      sF, INTERRUPTORES_MENOR_PESO                                                        ; Carga el dato INTERRUPTORES_MENOR_PESO en el registro auxiliar sF
+                                OUT     sF, DIGITO_0                                                                        ; Cargo el dato de INTERRUPTORES en DIGITO_0 
+                                JUMP    sigo_0
+
+								; Apago InT y muestro INTERRUPTORES_MENOR_PESO (a 0)
+no_muestro_int:					LOAD    sF, $00                                                                             ; Carga el dato correspondiente a "I" en el resgistro auxiliar sF
+                                OUT     sF, DIGITO_I                                                                        ; Representa la letra "I" en el digito 3 del visualizador
+                                LOAD    sF, $00                                                                             ; Carga el dato correspondiente a "n" en el resgistro auxiliar sF
+                                OUT     sF, DIGITO_N                                                                        ; Representa la letra "n" en el digito 2 del visualizador
+                                LOAD    sF, $00                                                                             ; Carga el dato correspondiente a "T" en el registro auxiliar
+                                OUT     sF, DIGITO_T                                                                        ; Representa la letra "T" en el digito 1 del visualizador
+                                IN      sF, INTERRUPTORES_MENOR_PESO                                                        ; Carga el dato INTERRUPTORES_MENOR_PESO en el registro auxiliar sF
+                                OUT     sF, DIGITO_0                                                                        ; Cargo el dato de INTERRUPTORES en DIGITO_0
+                                RET
+                                ; Final de la subrutina
+
+
+                                ; Escribo PUL en DIGITO_P, DIGITO_UL, DIGITO_L y visualizo los pulsadores en DIGITO_4
+muestro_pul:                    LOAD    sF, $CE                                                                             ; Carga el dato correspondiente a "P" en el resgistro auxiliar sF
+                                OUT     sF, DIGITO_P                                                                        ; Representa la letra "P" en el digito 9 del visualizador
+                                LOAD    sF, $7C                                                                             ; Carga el dato correspondiente a "U" en el resgistro auxiliar sF
+                                OUT     sF, DIGITO_U                                                                        ; Representa la letra "U" en el digito 8 del visualizador
+                                LOAD    sF, $1C                                                                             ; Carga el deto correspondiente a "L" en el registro auxiliar
+                                OUT     sF, DIGITO_L                                                                        ; Representa la letra "L" en el digito  del visualizador
+                                IN      sF, PULSADORES                                                                      ; Carga el dato PULSADORES en el registro auxiliar
+                                OUT     sF, DIGITO_4                                                                        ; Cargo el dato de PULSADORES en DIGITO_4
+                                JUMP    sigo_1
+
+								; Apago PUL y muestro PULSADORES (a 0)
+no_muestro_pul:                 LOAD    sF, $00                                                                             ; Carga el dato correspondiente a "P" en el resgistro auxiliar sF
+                                OUT     sF, DIGITO_P                                                                        ; Representa la letra "P" en el digito 9 del visualizador
+                                LOAD    sF, $00                                                                             ; Carga el dato correspondiente a "U" en el resgistro auxiliar sF
+                                OUT     sF, DIGITO_U                                                                        ; Representa la letra "U" en el digito 8 del visualizador
+                                LOAD    sF, $00                                                                             ; Carga el deto correspondiente a "L" en el registro auxiliar
+                                OUT     sF, DIGITO_L                                                                        ; Representa la letra "L" en el digito  del visualizador
+                                IN      sF, PULSADORES                                                                      ; Carga el dato PULSADORES en el registro auxiliar
+                                OUT     sF, DIGITO_4                                                                        ; Cargo el dato de PULSADORES en DIGITO_4
+								RET
+								; Final de la subrutina
+
+
+rutina_interrupcion:            ; Interrupciones externas se inhiben automáticamente         
+                                IN      tipo_interrupcion, FUENTE_INTERRUPCION                                              ; Guardo en sF el estado de la interrupción por temporizador
+                                COMP    tipo_interrupcion, $0                                                               ; Comparo el estado de la interrupción con 0
+                                JUMP    NZ, interrupcion_por_temporizador                                                   ; Si el sF (interrupción por temporizador) != 0 --> Salto a la rutina de interrupción por temporizador
+                                ADD     count, $01                                                                          ; Sumo 1 al contador 
+                                OUT     count, LEDs_MENOR_PESO                                                              ; Muestro el valor del contador en los LEDs menor peso
+                                CALL    muestro_en_uart
+								;CALL 	apago_uart
+fin_rutinas_interrupcion:       RETI    ENABLE                                                                              ; Vuelvo a la posición de memoria donde se hizo la interrupción                                                                              
+                                ; Fin de atención de la rutina de interrupción
+
+                                ; EJERCICIO 2: Rutina de interrupción por temporizador
+interrupcion_por_temporizador:  CALL    muestro_en_uart                                                                        ; Muestro en la UART el estado del contaddor (sin incrementar)
+								;CALL 	apago_uart
+								JUMP    fin_rutinas_interrupcion
+
+                                ; EJERCICIO 1: Subrutina para mandar la cuenta a la UART
+muestro_en_uart:                OUT     count, UART_RS232                                                                         ; Muestro el valor del contardor en la UART
+                                RET
+                                ; Fin de las subrutina
+
+;apago_uart:						LOAD    sF, $00
+;								OUT 	sF, UART_RS232
+;								RET	
+
+                                ORG     $3FF                                                                                ; El vector de interrupción está en la posición 3FF (la última)
+interrupcion:                   JUMP    rutina_interrupcion                                                                 ; Salto a la rutina de atención a la interrupción
+
+; Pulsadores iluminan el Pul - 7 segmentos --> Arriba arriba, Izquierda izda. arriba, Derecha der. arriba, Abajo abajo, Medio medio (mientras este pulsado)
+; Interruptores mayor peso --> Leds de mayor peso
+; Interruptores de menor peso --> Int y 7 segmentos
+; Pulsador de interrupción --> LEDs menor peso 

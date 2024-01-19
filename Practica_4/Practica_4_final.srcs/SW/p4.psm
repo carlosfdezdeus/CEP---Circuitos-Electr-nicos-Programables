@@ -1,0 +1,557 @@
+; Generación del fichero VHDL con el código para la memoria del programa
+                                            VHDL    "ROM_blank_modificada_s7.vhd", "picocode_s7.vhd", "picocode_s7"
+; Los siguientes dos comandos se utilizan para cambiar el código del programa directamente en el archivo .bit
+; de configuracion sin tener que realizar de nuevo la implementacion de todo el sistema en Vivado.
+; De esa forma, cuando se ensamble el programa, la FPGA se reconfigurar� de forma autom�tica con el nuevo c�digo.
+; El comando COE genera un archivo con el codigo maquina en formato coe.
+                                            ;COE     "picocode_s7.coe"
+
+; El comando EXEC ejecuta el archivo por lotes load_sw_Vivado_s7.bat.
+; Como parametro se le pasa el archivo .bit obtenido en la implementacion.
+; Hay que indicar el directorio del archivo .bit relativo al directorio donde se encuentre el codigo del programa en ensamblador.
+; Comentarlo si solamente se desea simular el programa y no configurar la FPGA.
+                                            ;EXEC    "load_sw_Vivado_s7.bat CEP_23_24_practica_4_hw.bit"
+
+
+; Defición de direcciones de PUERTOS de ENTRADA:
+FUENTE_INTERRUPCION                         DSIN    0
+INTERRUPTORES_MENOR_PESO                    DSIN    1
+INTERRUPTORES_MAYOR_PESO                    DSIN    2
+PULSADORES                                  DSIN    3                                                                     ; No se si es ese el puetto donde va el Temporizador    
+I2C_RX                                      DSIN    6
+I2C_STATUS                                  DSIN    7
+
+; Definición de direcciones de PUERTOS de SALIDA:
+LEDs_MENOR_PESO                             DSOUT   0                                                                     ; LEDs_MENOR_PESO se modifican con INTERRUPTORES_MENOR_PESO
+LEDs_MAYOR_PESO                             DSOUT   1                                                                     ; LEDs_MAYOR_PESO se modifican con INTERRUPTORES_MAYOR_PESO
+DIGITO_0                                    DSOUT   2                                                                     ; DIGITO_0 se modifica con INTERRUPTORES_MENOR_PESO
+DIGITO_1                                    DSOUT   3                                                                     ; DIGITO_1 se modifica con INTERRUPTORES_MAYOR_PESO
+DIGITO_2                                    DSOUT   4
+DIGITO_3                                    DSOUT   5
+DIGITO_4                                    DSOUT   6
+DIGITO_5                                    DSOUT   7
+DIGITO_6                                    DSOUT   8
+DIGITO_7                                    DSOUT   9
+UART_RX                                     DSOUT   10
+I2C_CONTROL                                 DSOUT   13
+I2C_TX                                      DSOUT   14
+
+; Definición de CONSTANTES:
+; Constantes para el I2C
+start                                       EQU     1               ; "00001"
+stop                                        EQU     2               ; "00010"
+tx_byte                                     EQU     4               ; "00100"
+rx_byte                                     EQU     8               ; "01000"
+ack_master                                  EQU     16              ; "10000"
+dir_temp_mayor                              EQU     $00
+iic_sensor_address_w                        EQU     150             ; dirección del sensor con escritura "10010110"
+iic_sensor_address_r                        EQU     151             ; dirección del sensor con lectura "10010111"
+; Constantes para el 7 segmentos
+punto                                       EQU     1				; "00000001"
+menos                                       EQU     2		   		; "00000010"
+
+; Definición de REGISTROS:
+unidades                                    EQU     s1
+decenas                                     EQU     s2
+centenas                                    EQU     s3
+reg_interruptores_mayor                     EQU     s4
+reg_interruptores_menor                     EQU     s5
+reg_bit_signo                               EQU     s6
+count										EQU 	s7
+tipo_interrupcion                           EQU     s9
+decimas                                     EQU     sA
+centesimas                                  EQU     sB
+milesimas                                   EQU     sC
+diezmilesimas                               EQU     sD
+data_to_transmit                            EQU     sE
+; RUTINA DE BINARIO A BCD
+; RUTINA DE BCN A 2SEGMENTOS
+; RUTINA PARA HACER START
+; RUTINA PARA HACER STOP
+
+; COMIENZO DEL PROGRAMA PRINCIPAL:
+                                ORG     $0                                                                                  ; El programa comienza en la posición 0
+
+inicio:                         LOAD    count, $00                                                                          ; Inicializa el contador
+                                LOAD    sF, $00                                                                             ; Carga un 0 en el registro auxiliar sF
+                                OUT     sF, LEDs_MENOR_PESO                                                                 ; Apaga los LEDs de menor peso
+                                OUT     sF, LEDs_MAYOR_PESO                                                                 ; Apaga los LEDs de mayor peso
+                                OUT     sF, DIGITO_0                                                                        ; DIGITO_0 <- $00: Pone a 0 el digito 0 del visualizador
+                                OUT     sF, DIGITO_1                                                                        ; DIGITO_1 <- $00: Pone a 0 el digito 1 del visualizador
+                                OUT     sF, DIGITO_2                                                                        ; DIGITO_2 <- $00: Pone a 0 el digito 2 del visualizador
+                                OUT     sF, DIGITO_3                                                                        ; DIGITO_3 <- $00: Pone a 0 el digito 3 del visualizador
+                                OUT     sF, DIGITO_4                                                                        ; DIGITO_4 <- $00: Pone a 0 el digito 3 del visualizador
+                                OUT     sF, DIGITO_5                                                                        ; DIGITO_5 <- $00: Pone a 0 el digito 3 del visualizador
+                                OUT     sF, DIGITO_6                                                                        ; DIGITO_6 <- $00: Pone a 0 el digito 3 del visualizador
+                                OUT     sF, DIGITO_7                                                                        ; DIGITO_7 <- $00: Pone a 0 el digito 3 del visualizador
+                                EINT                                               
+; PRUEBA
+;bucle:							LOAD 	sF, $FE
+;								OUT     sF, DIGITO_0                                                                        ; DIGITO_0 <- $00: Pone a 0 el digito 0 del visualizador
+;                                OUT     sF, DIGITO_1                                                                        ; DIGITO_1 <- $00: Pone a 0 el digito 1 del visualizador
+;                                OUT     sF, DIGITO_2                                                                        ; DIGITO_2 <- $00: Pone a 0 el digito 2 del visualizador
+;                                OUT     sF, DIGITO_3                                                                        ; DIGITO_3 <- $00: Pone a 0 el digito 3 del visualizador
+;                                OUT     sF, DIGITO_4                                                                        ; DIGITO_4 <- $00: Pone a 0 el digito 3 del visualizador
+;                                OUT     sF, DIGITO_5                                                                        ; DIGITO_5 <- $00: Pone a 0 el digito 3 del visualizador
+;                                OUT     sF, DIGITO_6                                                                        ; DIGITO_6 <- $00: Pone a 0 el digito 3 del visualizador
+;                                OUT     sF, DIGITO_7										
+;                                JUMP    bucle
+
+
+; BUCLE PRINCIPAL:
+  				  				;CALL	lectura_iic
+lectura_puertos:          
+                                ; Leo estado interruptores y los cargo en sus respectivos LEDs:
+                                ;IN      reg_interruptores_mayor, INTERRUPTORES_MAYOR_PESO                                   ; Lee el estado actual de los interruptores de mayor peso
+                                ;IN      reg_interruptores_menor, INTERRUPTORES_MENOR_PESO                                   ; Lee el estado actual de los interruptores de menor peso
+
+                                CALL    lectura_iic
+
+                                CALL    compruebo_interruptores 
+
+                                ; Compruebo el resultado de la subrutina de comprobación
+                                COMP    sF, 0
+                                JUMP    Z, temp_0
+                                JUMP    conversion
+
+lectura_puertos_visualizar:     COMP    reg_bit_signo, 0
+                                CALL    Z, visualizo_con_0
+                                COMP    reg_bit_signo, 1
+                                CALL    Z, visualizo_con_1                         
+fin_lectura_puertos:            JUMP    lectura_puertos
+
+
+
+; SUBRUTINAS:
+; SUBRUTINA para la lectura del I2C:
+lectura_iic:                 
+                                ; Hago un start de un pulso de reloj
+                                LOAD    sF, start
+                                OUT     sF, I2C_CONTROL
+                                LOAD    sF, 0                                
+                                OUT     sF, I2C_CONTROL
+
+                                ; Espero a que deje de estar ocupado
+wait_start:                     IN      sF, I2C_STATUS
+                                TEST    sF, 2                                                                               ; sF = 2 (10) --> busy
+                                JUMP    NZ, wait_start                                                                       ; Si es 2 entonces sigo esperando
+
+                                ; Envio dirección del sensor + escritura
+                                LOAD    data_to_transmit, iic_sensor_address_w
+                                OUT     data_to_transmit, I2C_TX
+                                ; Pido al I2C una transmisión (1 pulso de reloj)
+                                LOAD    sF, tx_byte
+                                OUT     sF, I2C_CONTROL
+                                LOAD    sF, 0                                
+                                OUT     sF, I2C_CONTROL
+
+                                ; Espero a que deje de estar ocupado
+wait_transmit_1:                IN      sF, I2C_STATUS
+                                TEST    sF, 2                                                                              ; sF = 2 (10) --> busy
+                                JUMP    NZ, wait_transmit_1                                                                 ; Si es 2 entonces sigo esperando
+
+                                ; Envio dirección del registro de temperatura
+                                LOAD    data_to_transmit, dir_temp_mayor
+                                OUT     data_to_transmit, I2C_TX
+                                ; Pido al I2C una transmisión (1 pulso de reloj)
+                                LOAD    sF, tx_byte
+                                OUT     sF, I2C_CONTROL
+                                LOAD    sF, 0                                
+                                OUT     sF, I2C_CONTROL
+
+                                ; Espero a que deje de estar ocupado
+wait_transmit_2:                IN      sF, I2C_STATUS
+                                TEST    sF, 2                                                                               ; sF = 2 (10) --> busy
+                                JUMP    NZ, wait_transmit_2                                                                  ; Si es 2 entonces sigo esperando
+
+                                ; Hago el segundo start
+                                LOAD    sF, start
+                                OUT     sF, I2C_CONTROL
+                                LOAD    sF, 0                                
+                                OUT     sF, I2C_CONTROL
+                                
+                                ; Espero a que deje de estar ocupado:
+wait_start_2:                   IN      sF, I2C_STATUS
+                                TEST    sF, 2                                                                                ; sF = 2 (10) --> busy
+                                JUMP    NZ, wait_start_2                                                                      ; Si es 2 entonces sigo esperando
+
+                                ; Envio dirección del sensor + lectura
+                                LOAD    data_to_transmit, iic_sensor_address_r
+                                OUT     data_to_transmit, I2C_TX
+                                ; Pido al I2C una transmisión (1 pulso de reloj)
+                                LOAD    sF, tx_byte
+                                OUT     sF, I2C_CONTROL
+                                LOAD    sF, 0                                
+                                OUT     sF, I2C_CONTROL
+
+                                ; Espero a que deje de estar ocupado
+wait_transmit_3:                IN      sF, I2C_STATUS
+                                TEST    sF, 2                                                                               ; sF = 2 (10) --> busy
+                                JUMP    NZ, wait_transmit_3                                                                  ; Si es 2 entonces sigo esperando
+                                
+                                ; Realizo la PRIMERA lectura (reg_interruptores_mayor <= temp_mayor_peso)
+                                ; RECORDATORIO: Teníamos un registro en el icc que nos daba la salida el paralelo
+                                LOAD    sF, 0                   
+                                OUT     sF, ack_master                                                                      ; Meto un 0 en el puerto de salida del ack_master
+                                ; Pido al I2C una recepción (1 pulso de reloj)
+                                LOAD    sF, rx_byte                                                                         
+                                OUT     sF, I2C_CONTROL
+                                LOAD    sF, 0
+                                OUT     sF, I2C_CONTROL                                                                     
+wait_receive_1:                 ; Espero a que termine la lectura
+                                IN      sF, I2C_STATUS
+                                TEST    sF, 2                                                                               ; sF = 2 (10) --> busy
+                                JUMP    NZ, wait_receive_1                                                                   ; Si es 2 entonces sigo esperando
+   
+                                ; Guardo el valor de la temperatura en el reg_interruptores_mayor
+                                IN      reg_interruptores_mayor, I2C_RX
+
+                                ; Realizo la SEGUNDA lectura (reg_interruptores_mayor <= temp_mayor_peso)
+                                LOAD    sF, 1
+                                OUT     sF, ack_master
+                                ; Pido al I2C una recepción (1 pulso de reloj)
+                                LOAD    sF, rx_byte                                                                         
+                                OUT     sF, I2C_CONTROL
+                                LOAD    sF, 0
+                                OUT     sF, I2C_CONTROL
+wait_receive_2:                 ; Espero a que termine la lectura
+                                IN      sF, I2C_STATUS
+                                TEST    sF, 2                                                                               ; sF = 2 (10) --> busy
+                                JUMP    NZ, wait_receive_2                                                                   ; Si es 2 entonces sigo esperando
+   
+                                ; Guardo el valor de la temperatura en el reg_interruptores_menor
+                                IN      reg_interruptores_menor, I2C_RX
+fin_lectura_iic:                RET                                
+
+
+; SUBRUTINA que comprueba si los interruptores están todo a 0 o no
+compruebo_interruptores:         
+                                ; Compruebo si los interruptores de menor peso están a 0 para saber si la temperatura es 0º 
+                                COMP    reg_interruptores_menor, 0                                                          ; Compruebo si el estado del interruptor de menor peso es "00000000"
+                                JUMP    Z, comp_int_mayor                                                                   ; Si el estado == "00000000" -> compruebo los interruptores de mayor peso
+                                JUMP    interruptores_1                                                                     ; Si el estado != "00000000" -> La temperatura no es 0º (interruptores != "0...0") 
+                                
+                                ; Compruebo si los interruptores de mayor peso están a 0 para saber si la temperatura es 0º
+comp_int_mayor:                 COMP    reg_interruptores_mayor, 0                                                          ; Compruebo si el estado del interruptor de menor peso es "00000000"
+                                JUMP    Z, interruptores_0                                                                  ; Si el estado = "00000000" -> ambos interruptes están a cero 
+                                JUMP    interruptores_1
+
+interruptores_1:                LOAD    sF, 1                                                                               ; Cargo en el registro auxiliar un '1' conforme los interruptores son != "0...0"
+                                JUMP    fin_compruebo_interruptores                                                         ; Salto al final de las subrutina de comprobación de los interruptores
+
+interruptores_0:                LOAD    sF, 0                                                                               ; Cargo en el registro auxiliar un '0' conforme los interruptores son == "0...0"
+                                JUMP    fin_compruebo_interruptores                                                         ; Salto al final de la subrutina de comprobación de los interruptores
+
+                                ; Fin rutina de comprobación de interruptores
+fin_compruebo_interruptores:    RET
+
+
+; SUBRUTINA(salto a etiqueta) de conversión para mostrar las temperaturas en los 7 segmentos:
+conversion:                     
+                                ; INTERRUPTORES_MAYOR --> "SEEEEEEE"  S=Signo, E=Entero
+                                ; INTERRUPTORES_MENOR --> "EDDDD000"  E=Entero, D=Decimal
+                                CALL    CA2_BIN
+                                CALL    BIN_BCD
+                                LOAD    sF, unidades
+                                CALL    BCD_7SEG
+                                LOAD    unidades, sF
+
+                                LOAD    sF, centenas
+                                CALL    BCD_7SEG
+                                LOAD    centenas, sF
+
+                                LOAD    sF, decenas
+                                CALL    BCD_7SEG
+                                LOAD    decenas, sF
+                                
+                                CALL    conversion_fraccional
+                                
+                                LOAD    sF, decimas
+                                CALL    BCD_7SEG
+                                LOAD    decimas, sF
+                                
+                                LOAD    sF, centesimas
+                                CALL    BCD_7SEG
+                                LOAD    centesimas, sF
+                                
+                                LOAD    sF, milesimas
+                                CALL    BCD_7SEG
+                                LOAD    milesimas, sF
+
+								LOAD    sF, diezmilesimas
+                                CALL    BCD_7SEG
+                                LOAD    diezmilesimas, sF
+                                
+fin_conversion:                 JUMP    lectura_puertos_visualizar
+
+;Subrutina de conversión de CA2 a BIN                                
+CA2_BIN:                         ; Quito los 3 LS bits
+                                LOAD    sF, $F8 ;"11111000"
+                                AND     reg_interruptores_menor, sF                                                         ; 10101XXX AND 11111000 = 10101000
+
+                                ; Compruebo si el MS bit de los interruptores de mayor peso está a 0 para NO calcular el CA2
+								LOAD  	count, $80
+								LOAD	sF, reg_interruptores_mayor
+								AND		sF, count
+								COMP    sF, 0                                                                               ; Comparo el primer bit (bit de signo) con 0
+                                JUMP    NZ, MSbit_1                                                                         ; Si bit de signo != 0 -> Salto a MSbit_1
+                                JUMP    MSbit_0                                                                             ; Bit signo = 0 -> Llamo a subrutina Msbit_0
+                                            
+MSbit_0:                        LOAD    reg_bit_signo, 0                                                                    ; Guardo en un registro el bit de signo (igual es inecesario)
+                                SL0     reg_interruptores_menor                                                             ; "EDDDD000" -- SL0 -> C=E "DDDD0000"
+                                SLA     reg_interruptores_mayor                                                             ; "SEEEEEEE" -- SLA -> "EEEEEEEC" = "EEEEEEEE"
+                                JUMP    FIN_CA2_BIN
+
+MSbit_1:                        LOAD    reg_bit_signo, 1                                                                    ; Guardo en un registro el bit de signo (igual es inecesario)
+                                SL0     reg_interruptores_menor                                                             ; "EDDDD000" -- SL0 -> C=E "DDDD0000"
+                                SLA     reg_interruptores_mayor                                                             ; "SEEEEEEE" -- SLA -> "EEEEEEEC" = "EEEEEEEE"
+
+                                ;Convierto la parte entera a binario
+                                LOAD    sF, $FF ;"11111111"
+                                XOR     reg_interruptores_menor,sF                                                          ; Niego reg_interruptores_menor -> CALCULO EL CA1
+                                XOR     reg_interruptores_mayor,sF                                                          ; Niego reg_interruptores_mayor -> CALCULO EL CA1
+                                ADD     reg_interruptores_menor, 1                                                          ; Sumo 1 al reg_interruptores_menor -> TERMINO DE CONVERTIR A BINARIO
+                                ADDC    reg_interruptores_mayor, 0                                                          ; Si reg_interruptores_menor queda "11111111" + 1 --> C=1 "00000000". Ese C hay que sumarlo a reg_interruptores_mayor
+                                ;ADD 	reg_interruptores_mayor, 1
+                                
+FIN_CA2_BIN:                    RET
+
+; Subrutina conversión de BIN a BCD
+BIN_BCD:                        LOAD    centenas, 0                                                                     ; Inicializo centenas a 0
+                                LOAD    decenas, 0                                                                      ; Inicializo decenas a 0
+                                LOAD    unidades, 0                                                                     ; Inicializo unidades a 0
+
+bucle100:                       SUB     reg_interruptores_mayor, 100                                                    ; Resto 100
+                                JUMP    C, fin_bucle100                                                                 ; Finaliza el bucle
+                                ADD     centenas, 1                                                                     ; Incrementa las centenas
+                                JUMP    bucle100                                                                        ; Repite el bucle
+fin_bucle100:                   ADD     reg_interruptores_mayor, 100                                                    ; Restaura el valor de reg_interruptores_mayor
+
+bucle10:                        SUB     reg_interruptores_mayor, 10                                                     ; Resta 10
+                                JUMP    C, fin_bucle10                                                                  ; Finaliza el bucle
+                                ADD     decenas, 1                                                                      ; Incrementa decenas
+                                JUMP    bucle10                                                                         ; Repite bucle
+fin_bucle10:                    ADD     reg_interruptores_mayor, 10                                                     ; Restaura el valor de reg_interruptores_mayor
+
+fin_bucle:                      LOAD    unidades, reg_interruptores_mayor                                               ; Guarda unidades en unidades_bcd  
+FIN_BIN_BCD:                    RET
+
+; Subrutina conversión de BCD a 7SEGMENTOS
+BCD_7SEG:                       COMP    sF, 0
+                                JUMP    Z, cero
+                                COMP    sF, 1
+                                JUMP    Z, uno
+                                COMP    sF, 2
+                                JUMP    Z, dos
+                                COMP    sF, 3
+                                JUMP    Z, tres
+                                COMP    sF, 4
+                                JUMP    Z, cuatro
+                                COMP    sF, 5
+                                JUMP    Z, cinco
+                                COMP    sF, 6
+                                JUMP    Z, seis
+                                COMP    sF, 7
+                                JUMP    Z, siete 
+                                COMP    sF, 8
+                                JUMP    Z, ocho
+                                COMP    sF, 9
+                                JUMP    Z, nueve
+FIN_BCD_7SEG:                   RET
+
+cero:                           LOAD    sF, $FC
+                                JUMP    FIN_BCD_7SEG
+uno:                            LOAD    sF, $60
+                                JUMP    FIN_BCD_7SEG
+dos:                            LOAD    sF, $DA
+                                JUMP    FIN_BCD_7SEG
+tres:                           LOAD    sF, $F7
+                                JUMP    FIN_BCD_7SEG
+cuatro:                         LOAD    sF, $66
+                                JUMP    FIN_BCD_7SEG
+cinco:                          LOAD    sF, $B6
+                                JUMP    FIN_BCD_7SEG
+seis:                           LOAD    sF, $BE
+                                JUMP    FIN_BCD_7SEG
+siete:                          LOAD    sF, $E0
+                                JUMP    FIN_BCD_7SEG
+ocho:                           LOAD    sF, $FE
+                                JUMP    FIN_BCD_7SEG
+nueve:                          LOAD    sF, $E6
+                                JUMP    FIN_BCD_7SEG
+
+;fin_conversion:                 JUMP    fin_lectura_puertos
+
+; Subrutina de visualización con signo +
+visualizo_con_0:			    LOAD 	sF, 0
+							    OUT     sF, DIGITO_7
+                                OUT     centenas, DIGITO_6
+                                OUT     decenas, DIGITO_5
+                                ;LOAD    sF, punto
+                                ADD		unidades, 1
+                                OUT     unidades, DIGITO_4
+                                ;OUT     sF, DIGITO_4
+                                OUT     decimas, DIGITO_3
+                                OUT     centesimas, DIGITO_2
+                                OUT     milesimas, DIGITO_1
+                                OUT     diezmilesimas, DIGITO_0
+                                JUMP    fin_lectura_puertos
+
+; Subrutina de visualización con signo -
+visualizo_con_1:			    LOAD 	sF, menos
+				                OUT     sF, DIGITO_7
+				                LOAD    sF, 0
+                                OUT     sF, DIGITO_6
+                                OUT     decenas, DIGITO_5
+                                ADD		unidades, 1
+                                OUT     unidades, DIGITO_4
+                                OUT     decimas, DIGITO_3
+                                OUT     centesimas, DIGITO_2
+                                OUT     milesimas, DIGITO_1
+                                OUT     diezmilesimas, DIGITO_0
+                                JUMP    fin_lectura_puertos
+
+; Subrutina de visualización con temperatura 0º
+temp_0:		   				  	LOAD 	sF, 0
+	   		   				    OUT     sF, DIGITO_7
+                                OUT     sF, DIGITO_6
+                                OUT     sF, DIGITO_5
+								LOAD    sF, $FC
+								ADD     sF, 1
+                                OUT     sF, DIGITO_4
+                                LOAD    sF, $FC
+                                OUT     sF, DIGITO_3
+								LOAD    sF, 0
+                                OUT     sF, DIGITO_2
+                                LOAD    sF, 0
+                                OUT     sF, DIGITO_1
+								LOAD	sF, 0
+                                OUT     sF, DIGITO_0
+                                JUMP    fin_lectura_puertos
+
+; Subrutina para la conversión de BIN a BCD de la parte fraccional
+conversion_fraccional:          ; Desplazo 4 veces el interruptor_menor_peso
+                                LOAD    decimas, 1
+                                LOAD    centesimas, 1
+                                LOAD    milesimas, 1
+                                LOAD    diezmilesimas, 1
+                                LOAD    count, 9
+                                SR0     reg_interruptores_menor
+                                SR0     reg_interruptores_menor
+                                SR0     reg_interruptores_menor
+                                SR0     reg_interruptores_menor
+                                LOAD 	sF, reg_interruptores_menor                                 ; sF <- 11100000
+multiplicacion_10:				ADD     reg_interruptores_menor, sF                                 ; 11100000 + 11100000
+                                SUB     count, 1
+                                COMP    count, 0
+                                JUMP    NZ, multiplicacion_10
+                                COMP    decimas, 1
+                                JUMP    Z, eti_decimas
+                                COMP    centesimas, 1
+                                JUMP    Z, eti_centesimas
+                                COMP    milesimas, 1
+                                JUMP    Z, eti_milesimas
+                                COMP    diezmilesimas, 1
+                                JUMP    Z, eti_diezmilesimas
+fin_conversion_fraccional:      RET
+
+eti_decimas:                    LOAD    decimas, reg_interruptores_menor                            
+                                SR0     decimas
+                                SR0     decimas
+                                SR0     decimas
+                                SR0     decimas
+                                LOAD    sF,$0F   	 										   		 ;"00001111"
+                                AND     reg_interruptores_menor, sF
+                                LOAD    count, 9
+                                LOAD 	sF, reg_interruptores_menor
+                                JUMP    multiplicacion_10
+
+eti_centesimas:                 LOAD    centesimas, reg_interruptores_menor
+                                SR0     centesimas
+                                SR0     centesimas
+                                SR0     centesimas
+                                SR0     centesimas
+                                LOAD    sF, $0F                                                     ;"00001111"
+                                AND     reg_interruptores_menor, sF
+                                LOAD    count, 9
+                                LOAD 	sF, reg_interruptores_menor
+                                JUMP    multiplicacion_10
+
+eti_milesimas:                  LOAD    milesimas, reg_interruptores_menor
+                                SR0     milesimas
+                                SR0     milesimas
+                                SR0     milesimas
+                                SR0     milesimas
+                                LOAD    sF, $0F ;"00001111"
+                                AND     reg_interruptores_menor, sF
+                                LOAD    count, 9
+                                LOAD 	sF, reg_interruptores_menor
+                                JUMP    multiplicacion_10
+
+eti_diezmilesimas:              LOAD    diezmilesimas, reg_interruptores_menor
+                                SR0     diezmilesimas
+                                SR0     diezmilesimas
+                                SR0     diezmilesimas
+                                SR0     diezmilesimas
+                                LOAD    sF, $0F ;"00001111"
+                                AND     reg_interruptores_menor, sF
+                                LOAD    count, 10
+                                LOAD 	sF, reg_interruptores_menor
+                                JUMP    fin_conversion_fraccional
+
+
+rutina_interrupcion:            ; Interrupciones externas se inhiben autom�ticamente
+                                IN      tipo_interrupcion, FUENTE_INTERRUPCION                                              ; Guardo en sF el estado de la interrupci�n por temporizador
+                                COMP    tipo_interrupcion, $0                                                               ; Comparo el estado de la interrupci�n con 0
+                                JUMP    NZ, interrupcion_por_temporizador                                                   ; Si el sF (interrupci�n por temporizador) != 0 --> Salto a la rutina de interrupci�n por temporizador
+                                ;ADD     count, $01                                                                          ; Sumo 1 al contador
+                                ;OUT     count, LEDs_MENOR_PESO                                                              ; Muestro el valor del contador en los LEDs menor peso
+                                ;CALL    muestro_en_uart
+								;CALL 	apago_uart
+fin_rutinas_interrupcion:       RETI    ENABLE                                                                              ; Vuelvo a la posici�n de memoria donde se hizo la interrupci�n
+                                ; Fin de atenci�n de la rutina de interrupci�n
+
+                                ; EJERCICIO 2: Rutina de interrupci�n por temporizador
+interrupcion_por_temporizador:  ;CALL    muestro_en_uart                                                                        ; Muestro en la UART el estado del contaddor (sin incrementar)
+								;CALL 	apago_uart
+								;CALL	lectura_iic
+								
+								
+								JUMP    fin_rutinas_interrupcion
+
+                                ; EJERCICIO 1: Subrutina para mandar la cuenta a la UART
+;muestro_en_uart:                OUT     count, UART_RS232                                                                         ; Muestro el valor del contardor en la UART
+;                                RET
+                                ; Fin de las subrutina
+
+;apago_uart:						LOAD    sF, $00
+;								OUT 	sF, UART_RS232
+;								RET	
+
+                                ORG     $3FF                                                                                ; El vector de interrupci�n est� en la posici�n 3FF (la �ltima)
+interrupcion:                   JUMP    rutina_interrupcion                                                                 ; Salto a la rutina de atenci�n a la interrupci�n
+
+; Pulsadores iluminan el Pul - 7 segmentos --> Arriba arriba, Izquierda izda. arriba, Derecha der. arriba, Abajo abajo, Medio medio (mientras este pulsado)
+; Interruptores mayor peso --> Leds de mayor peso
+; Interruptores de menor peso --> Int y 7 segmentos
+; Pulsador de interrupci�n --> LEDs menor peso
+
+; DECIMALES:
+; 1. 
+;   11100000 ---> 00001110
+
+; 2. DECIMAS
+;   00001110 * 1010 = 1000 1100
+;   0.8
+
+; 3. CENTESIMAS
+;   1100 * 1010 = 0111 1000
+;   0.87
+
+; 4. MILESIMAS
+;   1000 * 1010 = 0101 0000
+;   0.875
+
+; 5. DIEZMILESIMAS
+;   0000 * 1010 = 0000 0000
+;   0.8750

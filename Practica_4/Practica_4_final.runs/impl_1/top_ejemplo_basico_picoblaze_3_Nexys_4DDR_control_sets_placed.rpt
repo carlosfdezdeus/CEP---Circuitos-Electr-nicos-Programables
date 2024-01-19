@@ -1,0 +1,106 @@
+Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2018.3 (win64) Build 2405991 Thu Dec  6 23:38:27 MST 2018
+| Date         : Thu Nov 23 16:45:34 2023
+| Host         : LAPTOP-5UF41QPQ running 64-bit major release  (build 9200)
+| Command      : report_control_sets -verbose -file top_ejemplo_basico_picoblaze_3_Nexys_4DDR_control_sets_placed.rpt
+| Design       : top_ejemplo_basico_picoblaze_3_Nexys_4DDR
+| Device       : xc7a100t
+----------------------------------------------------------------------------------------------------------------------
+
+Control Set Information
+
+Table of Contents
+-----------------
+1. Summary
+2. Histogram
+3. Flip-Flop Distribution
+4. Detailed Control Set Information
+
+1. Summary
+----------
+
++----------------------------------------------------------+-------+
+|                          Status                          | Count |
++----------------------------------------------------------+-------+
+| Number of unique control sets                            |    32 |
+| Unused register locations in slices containing registers |    75 |
++----------------------------------------------------------+-------+
+
+
+2. Histogram
+------------
+
++--------+--------------+
+| Fanout | Control Sets |
++--------+--------------+
+|      1 |            3 |
+|      2 |            2 |
+|      3 |            1 |
+|      4 |            1 |
+|      5 |            1 |
+|      6 |            1 |
+|      8 |           14 |
+|      9 |            1 |
+|     10 |            2 |
+|     13 |            1 |
+|    16+ |            5 |
++--------+--------------+
+
+
+3. Flip-Flop Distribution
+-------------------------
+
++--------------+-----------------------+------------------------+-----------------+--------------+
+| Clock Enable | Synchronous Set/Reset | Asynchronous Set/Reset | Total Registers | Total Slices |
++--------------+-----------------------+------------------------+-----------------+--------------+
+| No           | No                    | No                     |              29 |           13 |
+| No           | No                    | Yes                    |              59 |           23 |
+| No           | Yes                   | No                     |              58 |           24 |
+| Yes          | No                    | No                     |               7 |            3 |
+| Yes          | No                    | Yes                    |             101 |           42 |
+| Yes          | Yes                   | No                     |              15 |            7 |
++--------------+-----------------------+------------------------+-----------------+--------------+
+
+
+4. Detailed Control Set Information
+-----------------------------------
+
++----------------------+---------------------------------------------+-----------------------------------+------------------+----------------+
+|     Clock Signal     |                Enable Signal                |          Set/Reset Signal         | Slice Load Count | Bel Load Count |
++----------------------+---------------------------------------------+-----------------------------------+------------------+----------------+
+|  ce_1KHz_BUFG        |                                             |                                   |                1 |              1 |
+|  clk_micro_IBUF_BUFG |                                             | UART/Inst_uart_tx/kcuart/R        |                1 |              1 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/int_update_enable      | Picoblaze/picoblaze3/I1           |                1 |              1 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/I3                     |                                   |                1 |              2 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/flag_enable            | Picoblaze/picoblaze3/I1           |                2 |              2 |
+|  clk_micro_IBUF_BUFG | UART/Inst_generador_baudios/en_16_x_baud    | UART/Inst_uart_tx/kcuart/R        |                1 |              3 |
+|  clk_micro_IBUF_BUFG | UART/Inst_uart_tx/buf/data_present          | UART/Inst_generador_baudios/AR[0] |                1 |              4 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/not_active_interrupt   | Picoblaze/picoblaze3/I1           |                2 |              5 |
+|  clk_micro_IBUF_BUFG | UART/Inst_generador_baudios/en_16_x_baud    |                                   |                2 |              6 |
+|  clk_micro_IBUF_BUFG |                                             | Picoblaze/picoblaze3/sel_logical  |                5 |              8 |
+|  clk_micro_IBUF_BUFG |                                             | Picoblaze/picoblaze3/sel_shift    |                3 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_0[0] | UART/Inst_generador_baudios/AR[0] |                4 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_2[0] | UART/Inst_generador_baudios/AR[0] |                2 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_6[0] | UART/Inst_generador_baudios/AR[0] |                2 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_1[0] | UART/Inst_generador_baudios/AR[0] |                3 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_7[0] | UART/Inst_generador_baudios/AR[0] |                4 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_5[0] | UART/Inst_generador_baudios/AR[0] |                2 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_3[0] | UART/Inst_generador_baudios/AR[0] |                3 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_4[0] | UART/Inst_generador_baudios/AR[0] |                3 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/write_strobe_flop_8[0] | UART/Inst_generador_baudios/AR[0] |                2 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/memory_enable          |                                   |                2 |              8 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/E[0]                   | UART/Inst_generador_baudios/AR[0] |                4 |              8 |
+|  clk_micro_IBUF_BUFG | UART/Inst_uart_tx/buf/valid_write           |                                   |                1 |              8 |
+|  clk_micro_IBUF_BUFG |                                             | Picoblaze/picoblaze3/sel_arith    |                3 |              9 |
+|  ce_1KHz_BUFG        |                                             | UART/Inst_generador_baudios/AR[0] |                4 |             10 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/pc_enable              |                                   |                3 |             10 |
+|  clk_micro_IBUF_BUFG |                                             | Picoblaze/picoblaze3/I1           |                6 |             13 |
+|  clk_micro_IBUF_BUFG |                                             | Gen_CE_1kHz/cont_1kHz[16]_i_1_n_0 |                4 |             16 |
+|  clk_micro_IBUF_BUFG | Picoblaze/picoblaze3/register_enable        |                                   |                2 |             16 |
+|  clk_micro_IBUF_BUFG | ce_1KHz_BUFG                                | UART/Inst_generador_baudios/AR[0] |               13 |             21 |
+|  clk_micro_IBUF_BUFG |                                             |                                   |               12 |             28 |
+|  clk_micro_IBUF_BUFG |                                             | UART/Inst_generador_baudios/AR[0] |               21 |             52 |
++----------------------+---------------------------------------------+-----------------------------------+------------------+----------------+
+
+

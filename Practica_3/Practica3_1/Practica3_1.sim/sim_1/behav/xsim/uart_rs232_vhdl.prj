@@ -1,0 +1,28 @@
+# compile vhdl design source files
+vhdl xil_defaultlib  \
+"../../../../../../../../../../../../Downloads/D_flip_flop.vhd" \
+"../../../../../../../../../../../../Downloads/codificador_con_prioridad_2_a_1.vhd" \
+"../../../../../../../../../../../../Downloads/decodificador_1_a_2.vhd" \
+"../../../../../../../../../../../../Downloads/detector_flancos.vhd" \
+"../../../../../../../../../../../../Downloads/gestion_2_interrupciones.vhd" \
+"../../../../../../../../../../../../Downloads/or_2_bits.vhd" \
+"../../../../../../../../../../../../Downloads/rs_flip_flop.vhd" \
+"../../../../Practica3_1.srcs/sources_1/new/top_ejemplo_basico_picoblaze_3_Nexys_4DDR.vhd" \
+"../../../../Practica3_1.srcs/sources_1/new/prueba.vhd" \
+"../../../../../../../../../../../../Downloads/selec_16_salidas_con_reg_y_mem_esc_lec.vhd" \
+"../../../../../../../../../../../../Downloads/Generador_CE_1KHz.vhd" \
+"../../../../../../../../../../../../Downloads/selec_16_entradas_con_reg_y_bypass.vhd" \
+"../../../../Practica3_1.srcs/sources_1/new/Registro.vhd" \
+"../../../../../../../../../../../../Downloads/Control_visualizador_dinamico_8digitos_7seg.vhd" \
+"../../../../../../../../../../../../Downloads/bbfifo_16x8.vhd" \
+"../../../../../../../../../../../../Downloads/kcuart_rx.vhd" \
+"../../../../../../../../../../../../Downloads/generador_baudios.vhd" \
+"../../../../../../../../../../../../Downloads/uart_rs232.vhd" \
+"../../../../../../../../../../../../Downloads/uart_tx.vhd" \
+"../../../../../../../../../../../../Downloads/kcuart_tx.vhd" \
+"../../../../../../../../../../../../Downloads/uart_rx.vhd" \
+"../../../../Practica3_1.srcs/sources_1/new/Registro_PUL.vhd" \
+"../../../../Practica3_1.srcs/sources_1/new/Registro_7Seg.vhd" \
+
+# Do not sort compile order
+nosort
